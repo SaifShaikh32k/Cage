@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycle Count</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --navy: #0f172a;
+  --blue: #3b82f6;
+  --blue-light: #60a5fa;
+  --muted: #94a3b8;
+  --card-bg: #1e293b;
+  --input-bg: #0f172a;
+  --border: rgba(255,255,255,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--navy);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px; left: -200px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.wrapper { width: 100%; max-width: 400px; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  display: none;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.card.active { display: block; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-header { margin-bottom: 28px; }
+
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.25);
+  color: var(--blue-light);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.step-dot {
+  width: 6px; height: 6px;
+  background: var(--blue);
+  border-radius: 50%;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+h2 { font-size: 22px; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
+.sub { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+.field { margin-bottom: 14px; }
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 7px;
+  font-family: 'DM Mono', monospace;
+}
+
+input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-family: 'DM Mono', monospace;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  color: #f1f5f9;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input::placeholder { color: #475569; }
+input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 15px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  border-radius: 16px;
+  border: none;
+  margin-top: 20px;
+  background: linear-gradient(135deg, var(--blue), #1d4ed8);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.3);
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(59,130,246,0.4); }
+.btn:active { transform: translateY(0); }
+
+.btn.secondary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  box-shadow: none;
+  margin-top: 10px;
+  font-weight: 600;
+}
+.btn.secondary:hover { background: rgba(255,255,255,0.08); box-shadow: none; }
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(59,130,246,0.07);
+  border: 1px solid rgba(59,130,246,0.15);
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.status-bar strong { color: #e2e8f0; }
+
+.badge {
+  background: linear-gradient(135deg, var(--blue), #1d4ed8);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #15803d;
+  border: 1px solid #16a34a;
+  color: white;
+  padding: 13px 22px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Sora', sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 999;
+}
+.toast.error { background: #991b1b; border-color: #dc2626; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.icon { font-size: 36px; margin-bottom: 10px; display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- STEP 1: Employee Login -->
+  <div class="card active" id="cardLogin">
+    <div class="card-header">
+      <div class="step-pill"><span class="step-dot"></span> Step 1 of 2</div>
+      <span class="icon">👤</span>
+      <h2>Employee Login</h2>
+      <div class="sub">Enter your details to begin the shift</div>
+    </div>
+
+    <div class="field">
+      <label>Employee ID</label>
+      <input id="empId" placeholder="e.g. EMP001" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field">
+      <label>Full Name</label>
+      <input id="empName" placeholder="e.g. Ahmed Al-Sayed" autocomplete="off">
+    </div>
+
+    <button class="btn" onclick="lockEmployee()">Start Shift →</button>
+  </div>
+
+  <!-- STEP 2: Tote Scan -->
+  <div class="card" id="cardTote">
+    <div class="card-header">
+      <div class="step-pill"><span class="step-dot"></span> Step 2 of 2</div>
+      <span class="icon">📦</span>
+      <h2>Scan Tote</h2>
+      <div class="sub">Enter Tote ID and quantity</div>
+    </div>
+
+    <div class="status-bar">
+      <div>
+        <strong id="displayName"></strong><br>
+        <span id="displayId" style="font-family:'DM Mono',monospace;font-size:11px;"></span>
+      </div>
+      <div class="badge">Scanned: <span id="scanCount">0</span></div>
+    </div>
+
+    <div class="field">
+      <label>Tote ID</label>
+      <input id="toteId" placeholder="Scan or type Tote ID" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field">
+      <label>Quantity in Tote</label>
+      <input id="toteQty" type="number" placeholder="0" min="0" autocomplete="off">
+    </div>
+
+    <button class="btn" onclick="submitTote()">Submit Tote ✓</button>
+    <button class="btn secondary" onclick="endShift()">End Shift</button>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxwI-6eTGrAWhWV1cKOAaaZg6OkEw7xTO05c05BQDhoaW7YkOTORWmtIxatl0kcOlzeTA/exec";
+
+let employeeId = "";
+let employeeName = "";
+let scanCount = 0;
+let toastTimer;
+
+document.getElementById("empId").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("empName").focus();
+});
+document.getElementById("empName").addEventListener("keydown", e => {
+  if (e.key === "Enter") lockEmployee();
+});
+document.getElementById("toteId").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("toteQty").focus();
+});
+document.getElementById("toteQty").addEventListener("keydown", e => {
+  if (e.key === "Enter") submitTote();
+});
+
+function switchCard(hideId, showId) {
+  document.getElementById(hideId).style.display = "none";
+  const next = document.getElementById(showId);
+  next.style.display = "block";
+  next.classList.remove("active");
+  void next.offsetWidth;
+  next.classList.add("active");
+}
+
+function lockEmployee() {
+  employeeId   = document.getElementById("empId").value.trim();
+  employeeName = document.getElementById("empName").value.trim();
+
+  if (!employeeId)   { showToast("⚠ Enter Employee ID", true); return; }
+  if (!employeeName) { showToast("⚠ Enter Full Name", true); return; }
+
+  scanCount = 0;
+  document.getElementById("displayName").innerText = employeeName;
+  document.getElementById("displayId").innerText   = employeeId;
+  document.getElementById("scanCount").innerText   = scanCount;
+
+  switchCard("cardLogin", "cardTote");
+  setTimeout(() => document.getElementById("toteId").focus(), 350);
+}
+
+function submitTote() {
+  const toteId  = document.getElementById("toteId").value.trim();
+  const toteQty = document.getElementById("toteQty").value.trim();
+
+  if (!toteId)  { showToast("⚠ Enter Tote ID", true); return; }
+  if (toteQty === "" || isNaN(toteQty)) { showToast("⚠ Enter a valid Qty", true); return; }
+
+  fetch(
+    API_URL +
+    "?employee_id="   + encodeURIComponent(employeeId) +
+    "&employee_name=" + encodeURIComponent(employeeName) +
+    "&tote_id="       + encodeURIComponent(toteId) +
+    "&qty="           + encodeURIComponent(toteQty)
+  ).catch(() => {});
+
+  scanCount++;
+  document.getElementById("scanCount").innerText = scanCount;
+  showToast("✔ Tote Submitted");
+
+  document.getElementById("toteId").value  = "";
+  document.getElementById("toteQty").value = "";
+  document.getElementById("toteId").focus();
+}
+
+function endShift() {
+  if (confirm(`End shift for ${employeeName}? Total totes scanned: ${scanCount}`)) {
+    employeeId = "";
+    employeeName = "";
+    scanCount = 0;
+    document.getElementById("empId").value   = "";
+    document.getElementById("empName").value = "";
+    switchCard("cardTote", "cardLogin");
+    setTimeout(() => document.getElementById("empId").focus(), 350);
+  }
+}
+
+function showToast(text, isError = false) {
+  const toast = document.getElementById("toast");
+  toast.innerText = text;
+  toast.classList.toggle("error", isError);
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+}
+</script>
+</body>
+</html>
